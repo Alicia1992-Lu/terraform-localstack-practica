@@ -1,0 +1,42 @@
+name: Terraform Validate
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validar Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Resumen de Validación
+        run: |
+          echo "### Resultados de Validación ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Format:** ${{ steps.fmt.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Init:** ${{ steps.init.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validate:** ${{ steps.validate.outcome }}" >> $GITHUB_STEP_SUMMARY

@@ -1,5 +1,7 @@
 # Terraform con LocalStack - Proyecto de Prácticas
 
+![Terraform Validate](https://github.com/TU-USUARIO/terraform-localstack-practica/actions/workflows/validate.yml/badge.svg)
+
 Proyecto de infraestructura como código usando Terraform y LocalStack para simulación de AWS.
 
 ## Descripción
