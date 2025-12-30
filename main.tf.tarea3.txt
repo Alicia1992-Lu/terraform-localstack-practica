@@ -1,0 +1,47 @@
+# main.tf - Tarea 3: Recurso Modificado
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  access_key                  = "test"
+  secret_key                  = "test"
+  region                      = "us-east-1"
+  s3_use_path_style           = true
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+
+  endpoints {
+    s3 = "http://localhost:4566"
+  }
+}
+
+# Bucket modificado con nuevas propiedades
+resource "aws_s3_bucket" "mi_bucket" {
+  bucket = "mi-bucket-terraform-practica"
+
+  tags = {
+    Name        = "Mi Bucket Terraform MODIFICADO"
+    Environment = "Production"                      # CAMBIO: era Development
+    ManagedBy   = "Terraform"
+    Version     = "2.0"                            # NUEVO
+    Owner       = "Alicia"                         # NUEVO
+    LastUpdate  = "2024-12-23"                     # NUEVO
+  }
+}
+
+# NUEVO: Configuración de versionado
+resource "aws_s3_bucket_versioning" "mi_bucket_versioning" {
+  bucket = aws_s3_bucket.mi_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
