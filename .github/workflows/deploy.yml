@@ -1,0 +1,90 @@
+name: Terraform Deploy to LocalStack
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: s3
+          DEBUG: 1
+        options: >-
+          --health-cmd "curl -f http://localhost:4566/_localstack/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Configurar AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: test
+          aws-secret-access-key: test
+          aws-region: us-east-1
+
+      - name: Verificar LocalStack
+        run: |
+          echo "Esperando a LocalStack..."
+          sleep 10
+          curl http://localhost:4566/_localstack/health
+          echo ""
+          echo "LocalStack está listo!"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -no-color
+        continue-on-error: false
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -no-color
+
+      - name: Verificar recursos creados
+        run: |
+          echo "###  Buckets creados en LocalStack:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          aws --endpoint-url=http://localhost:4566 s3 ls >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Listar recursos de Terraform
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "###  Recursos gestionados por Terraform:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          terraform state list >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform Show
+        run: terraform show -no-color
+
+      - name: Resumen del Deploy
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resumen del Deploy " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Estado:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
