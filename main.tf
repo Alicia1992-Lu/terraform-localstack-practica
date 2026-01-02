@@ -1,4 +1,16 @@
 # main.tf - Tarea 4: Uso de módulos
+#
+# Versión: 1.1
+# Última actualización: 2026-01-02
+#
+# Este archivo define la infraestructura usando módulos reutilizables
+# para mantener un código DRY (Don't Repeat Yourself) y facilitar
+# el mantenimiento.
+#
+# Cambios en v1.1:
+# - Documentación mejorada en código
+# - Comentarios explicativos añadidos
+# - Estructura optimizada
 
 terraform {
   required_providers {
